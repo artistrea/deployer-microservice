@@ -1,0 +1,20 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: true
+
+services:
+  db:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    environment:
+      API_KEY: "chave_exemplo"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/artistreak/projects/personal/deployer:/app/deployer
+      - ./paths.json:/usr/src/app/paths.json
+    ports:
+      - 1357:1357
