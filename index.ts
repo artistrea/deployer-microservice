@@ -1,7 +1,7 @@
 const bodySchema = {
   action: ["up", "down", "build"],
   name: "",
-  // rollback: {branch: string, commit: string},
+  // address: {branch: string, commit: string},
 } as const;
 
 const command = {
@@ -34,13 +34,13 @@ const server = Bun.serve({
         statusText: "Unprocessable Entity",
       });
 
-    if (typeof body !== "object" || !("action" in body) || !("name" in body) || (body.rollback && typeof body.rollback !== "object"))
+    if (typeof body !== "object" || !("action" in body) || !("name" in body) || (body.address && typeof body.address !== "object"))
       return new Response("Deu errado 2!", {
         status: 422,
         statusText: "Unprocessable Entity",
       });
 
-    if (typeof body.action !== "string" || typeof body.name !== "string" || (body.rollback && (typeof body.rollback.branch !== "string" || typeof body.rollback.commit !== "string")))
+    if (typeof body.action !== "string" || typeof body.name !== "string" || (body.address.commit && typeof body.address.commit !== "string") || (body.address.branch && typeof body.address.branch !== "string"))
       return new Response("Deu errado 3!", {
         status: 422,
         statusText: "Unprocessable Entity",
@@ -61,14 +61,9 @@ const server = Bun.serve({
       });
 
     try {
-      if (body.rollback) {
-
-        const proc = Bun.spawn(["git", "pull", "--branch", body.rollback.branch, "&&", "git", "checkout", body.rollback.commit], {
-          cwd: paths[body.name],
-          stdin: "inherit",
-          stdout: "inherit",
-        });
-        await proc.exited;
+      if (command[body.action] === "build" && body.address) {
+        body.address.commit? command[body.action].push(`COMMIT=${body.address.commit}`) : command[body.action].push(`BRANCH=${body.address.commit}`)
+      // Daí tem que definir no env da dockerfile o COMMIT e a BRANCH
       }
 
       const proc = Bun.spawn(command[body.action], {
