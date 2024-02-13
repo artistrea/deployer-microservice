@@ -1,79 +1,48 @@
-const bodySchema = {
-  action: ["up", "down", "build"],
-  name: "",
-  // address: {branch: string, commit: string},
-} as const;
+import { z } from "zod";
+
+const bodySchema = z.object({action : z.enum(["up", "down", "build"]), id : z.string(), address : z.string().optional()})
 
 const command = {
-  up: ["docker", "compose", "up", "-d"],
-  down: ["docker", "compose", "down"],
-  build: ["docker", "compose", "up", "-d", "--build"],
+  up: (address : string | undefined) => ["docker", "compose", "up", "-d"],
+      
+  down: (address : string | undefined) => ["docker", "compose", "down"],
+  build: (address : string | undefined) => address? [`BRANCH=${address}`, "docker", "compose", "up", "-d", "--build"] : ["docker", "compose", "up", "-d", "--build"],
 };
-
-function validateAction(
-  action: string
-): action is (typeof bodySchema.action)[number] {
-  return bodySchema.action.includes(action as any);
-}
 
 const server = Bun.serve({
   port: Number(process.env.PORT) || 1357,
   async fetch(req) {
     const body = await req.json();
     const authorization = req.headers.get("X-Authorization");
-
     if (authorization !== process.env.API_KEY)
       return new Response("Deu errado 0!", {
         status: 401,
         statusText: "Unauthorized",
       });
+    const result = bodySchema.safeParse(body);
 
-    if (!body)
-      return new Response("Faltou o corpo", {
+    if (!result.success) {
+      return new Response("Deu errado 1!", {
         status: 422,
-        statusText: "Unprocessable Entity",
-      });
-
-    if (typeof body !== "object" || !("action" in body) || !("name" in body) || (body.address && typeof body.address !== "object"))
-      return new Response("Deu errado 2!", {
-        status: 422,
-        statusText: "Unprocessable Entity",
-      });
-
-    if (typeof body.action !== "string" || typeof body.name !== "string" || (body.address.commit && typeof body.address.commit !== "string") || (body.address.branch && typeof body.address.branch !== "string"))
-      return new Response("Deu errado 3!", {
-        status: 422,
-        statusText: "Unprocessable Entity",
-      });
-
-    if (!validateAction(body.action))
-      return new Response("Deu errado 4!", {
-        status: 422,
-        statusText: "Unprocessable Entity",
-      });
-
+        statusText: "Invalid body"
+      })
+    }
+  
     const paths = await Bun.file("./paths.json").json();
-
-    if (!(body.name in paths))
+    if (!(result.data.id in paths))
       return new Response("Deu errado 5!", {
         status: 404,
         statusText: "Not Found",
       });
 
     try {
-      if (command[body.action] === "build" && body.address) {
-        body.address.commit? command[body.action].push(`COMMIT=${body.address.commit}`) : command[body.action].push(`BRANCH=${body.address.commit}`)
-      // Daí tem que definir no env da dockerfile o COMMIT e a BRANCH
-      }
-
-      const proc = Bun.spawn(command[body.action], {
-        cwd: paths[body.name],
+      const proc = Bun.spawn(command[result.data.action](result.data.address), {
+        cwd: paths[result.data.id],
         stdin: "inherit",
         stdout: "inherit",
       });
 
       await proc.exited;
-
       return new Response();
     } catch (e) {
       if (e instanceof Error)
