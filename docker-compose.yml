@@ -15,6 +15,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/artistreak/projects/personal/deployer:/app/deployer
+      - /home/artistreak/projects/deploy/teste-gh-action:/usr/src/app/deploy/teste-gh-action
       - ./paths.json:/usr/src/app/paths.json
     ports:
       - 1357:1357
