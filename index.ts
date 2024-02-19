@@ -23,10 +23,10 @@ async function recordAction(data, paths) {
     })
 
     await proc.exited;
-    console.log("Deu certo")
+    console.log("It worked")
     // GRAVAR NO BD QUE DEU CERTO
   } catch(e) {
-    console.log("Deu errado")
+    console.log("It didn't work")
     // GRAVAR NO BD QUE DEU ERRADO
   }
 }
@@ -35,24 +35,26 @@ const server = Bun.serve({
   port: Number(process.env.PORT) || 1357,
   async fetch(req) {
     if (req.method !== "POST")
-      return new Response("Requisição inválida", { status: 404 });
-
+      return new Response("Invalid request", { status: 404 });
+    console.log("Request is valid")
     const body = await req.json();
-    const authorization = req.headers.get("X-Authorization");
 
+    const authorization = req.headers.get("X-Authorization");
     if (authorization !== process.env.API_KEY)
       return new Response("Deu errado 0!", {
         status: 401,
         statusText: "Unauthorized",
       });
+      console.log("Authorization key is valid")
+    
     const result = bodySchema.safeParse(body);
-
     if (!result.success) {
       return new Response("Deu errado 1!", {
         status: 422,
         statusText: "Invalid body",
       });
     }
+    console.log("Body is valid")
 
     const paths = await Bun.file("./paths.json").json();
     if (!(result.data.id in paths))
@@ -60,7 +62,8 @@ const server = Bun.serve({
         status: 404,
         statusText: "Not Found",
       });
-
+    console.log("Path is valid")
+    
     recordAction(result.data, paths);
     return new Response(JSON.stringify({ message: "Deploy iniciado"}), {
       status: 200,
@@ -68,6 +71,7 @@ const server = Bun.serve({
 
   },
   error() {
+    console.log("Some error has occurred")
     return undefined;
   },
 });
