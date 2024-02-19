@@ -13,7 +13,7 @@ const command = {
 };
 
 const server = Bun.serve({
-  port: Number(process.env.PORT) || 1357,
+  port: Number(process.env.PORT) || 3001,
   async fetch(req) {
     if (req.method !== "POST")
       return new Response("Requisição inválida", { status: 404 });
