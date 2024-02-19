@@ -12,6 +12,25 @@ const command = {
   build: ["docker", "compose", "up", "-d", "--build"],
 };
 
+async function recordAction(data, paths) {
+  try {
+    // GRAVAR NO BD QUE COMECOU
+    const proc = Bun.spawn(command[data.action], {
+      cwd: paths[data.id],
+      env: data.address? { BRANCH: data.address} : {},
+      stdin: "inherit",
+      stdout: "inherit"
+    })
+
+    await proc.exited;
+    console.log("Deu certo")
+    // GRAVAR NO BD QUE DEU CERTO
+  } catch(e) {
+    console.log("Deu errado")
+    // GRAVAR NO BD QUE DEU ERRADO
+  }
+}
+
 const server = Bun.serve({
   port: Number(process.env.PORT) || 1357,
   async fetch(req) {
@@ -42,37 +61,11 @@ const server = Bun.serve({
         statusText: "Not Found",
       });
 
-    try {
-      if (result.data.address) {
-          const proc = Bun.spawn(command[result.data.action], {
-            cwd: paths[result.data.id],
-            env: { BRANCH: result.data.address},
-            stdin: "inherit",
-            stdout: "inherit"
-          })
-          await proc.exited;
-      } else {
-          const proc = Bun.spawn(command[result.data.action], {
-            cwd: paths[result.data.id],
-            stdin: "inherit",
-            stdout: "inherit",
-          });
-          await proc.exited;
-      }
-        
-      return new Response(JSON.stringify({ message: "AE" }), {
-        status: 200,
-      });
-    } catch (e) {
-      if (e instanceof Error)
-      return new Response(JSON.stringify(e), {
-    status: 500,
-  });
-  
-  return new Response("Deu merda", {
-        status: 500,
-      });
-    }
+    recordAction(result.data, paths);
+    return new Response(JSON.stringify({ message: "Deploy iniciado"}), {
+      status: 200,
+    })
+
   },
   error() {
     return undefined;
