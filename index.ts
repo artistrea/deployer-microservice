@@ -14,6 +14,7 @@ const command = {
 
 const server = Bun.serve({
   port: Number(process.env.PORT) || 3001,
+  hostname: process.env.HOST || "localhost",
   async fetch(req) {
     if (req.method !== "POST")
       return new Response("Requisição inválida", { status: 404 });
@@ -44,32 +45,32 @@ const server = Bun.serve({
 
     try {
       if (result.data.address) {
-          const proc = Bun.spawn(command[result.data.action], {
-            cwd: paths[result.data.id],
-            env: { BRANCH: result.data.address},
-            stdin: "inherit",
-            stdout: "inherit"
-          })
-          await proc.exited;
+        const proc = Bun.spawn(command[result.data.action], {
+          cwd: paths[result.data.id],
+          env: { BRANCH: result.data.address },
+          stdin: "inherit",
+          stdout: "inherit",
+        });
+        await proc.exited;
       } else {
-          const proc = Bun.spawn(command[result.data.action], {
-            cwd: paths[result.data.id],
-            stdin: "inherit",
-            stdout: "inherit",
-          });
-          await proc.exited;
+        const proc = Bun.spawn(command[result.data.action], {
+          cwd: paths[result.data.id],
+          stdin: "inherit",
+          stdout: "inherit",
+        });
+        await proc.exited;
       }
-        
+
       return new Response(JSON.stringify({ message: "AE" }), {
         status: 200,
       });
     } catch (e) {
       if (e instanceof Error)
-      return new Response(JSON.stringify(e), {
-    status: 500,
-  });
-  
-  return new Response("Deu merda", {
+        return new Response(JSON.stringify(e), {
+          status: 500,
+        });
+
+      return new Response("Deu merda", {
         status: 500,
       });
     }
