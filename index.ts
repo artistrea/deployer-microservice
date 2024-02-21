@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const command = {
+  up: ["docker", "compose", "up", "-d"],
+  down: ["docker", "compose", "down"],
+  build: ["docker", "compose", "up", "-d", "--build"],
+};
+
 const bodySchema = z.object({
   action: z.enum(["up", "down", "build"]),
   id: z.string(),
@@ -9,36 +15,34 @@ const bodySchema = z.object({
   }).optional(),
   
 });
+type bodyType = z.infer<typeof bodySchema>
 
-const command = {
-  up: ["docker", "compose", "up", "-d"],
-  down: ["docker", "compose", "down"],
-  build: ["docker", "compose", "up", "-d", "--build"],
-};
+const pathsSchema = z.record(z.string(), z.string());
+type pathsType = z.infer<typeof pathsSchema>
 
-async function recordAction(data, paths) {
+
+async function recordAction(body: bodyType, paths: pathsType) {
   try {
     // GRAVAR NO BD QUE COMECOU
-    const proc = Bun.spawn(command[data.action], {
-      cwd: paths[data.id],
+    const proc = Bun.spawn(command[body.action], {
+      cwd: paths[body.id],
       env: {
-        BRANCH: data.address? data.address : undefined,
-        TOKEN: data.private? data.private.token : undefined,
+        BRANCH: body.address? body.address : undefined,
+        TOKEN: body.private? body.private.token : undefined,
       },
       stdin: "inherit",
       stdout: "inherit"
     })
-
     await proc.exited;
     console.log("It worked")
     // GRAVAR NO BD QUE DEU CERTO
   } catch(e) {
-    if (e instanceof Error) {
+    if (e instanceof Error) 
       console.log(`It didn't work - ${e.message}`)
       // GRAVAR NO BD QUE DEU ERRADO
-    }
   }
 }
+
 
 const server = Bun.serve({
   port: Number(process.env.PORT) || 1357,
