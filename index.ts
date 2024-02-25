@@ -10,10 +10,7 @@ const bodySchema = z.object({
   action: z.enum(["up", "down", "build"]),
   id: z.string(),
   address: z.string().optional(),
-  private: z.object({
-    token: z.string(),
-  }).optional(),
-  
+  private_token: z.string().optional(),
 });
 type bodyType = z.infer<typeof bodySchema>
 
@@ -28,7 +25,7 @@ async function recordAction(body: bodyType, paths: pathsType) {
       cwd: paths[body.id],
       env: {
         BRANCH: body.address? body.address : undefined,
-        TOKEN: body.private? body.private.token : undefined,
+        TOKEN: body.private_token? body.private_token : undefined,
       },
       stdin: "inherit",
       stdout: "inherit"
