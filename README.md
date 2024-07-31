@@ -1,5 +1,7 @@
 # deployer-microservice
 
+Can be used with template: https://github.com/artistrea/teste-gh-action/blob/main/Dockerfile
+
 To install dependencies:
 
 ```bash
