@@ -1,6 +1,6 @@
 # deployer-microservice
 
-Can be used with template: https://github.com/artistrea/teste-gh-action/blob/main/Dockerfile
+Can be used with template: https://github.com/artistrea/teste-gh-action
 
 Was also created to be able to be used by a platform: https://github.com/artistrea/deployer
 
